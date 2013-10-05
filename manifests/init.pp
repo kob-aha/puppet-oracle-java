@@ -69,6 +69,27 @@ class oracle_java (
 			require			=> File[ "/tmp_javainstaller/java.dmg" ],
 		}
 	}
+	elsif $osfamily == "windows" {
+	
+		# The value should be configured to an existing temp folder
+		$temp_file_path = 'c:/Users/vagrant/AppData/Local/Temp'
+	
+		file { "${temp_file_path}":
+			ensure 		=> directory,
+		}
+	
+		file { "${temp_file_path}/${java_file}":
+			ensure 	=> present,
+			source	=> "puppet:///modules/oracle_java/${java_file}",
+			require => File[ "${temp_file_path}" ],
+		}
+
+		exec { "install_jdk":
+			command	=> "cmd.exe /c ${temp_file_path}/${java_file} /s",			
+			require => File[ "${temp_file_path}/${java_file}" ],
+			path 	=> $::path
+		}
+	}
 	else{
 
 		file { "$jvm_path":

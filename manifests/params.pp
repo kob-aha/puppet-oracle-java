@@ -12,7 +12,13 @@ class oracle_java::params {
 		$unrar_command = "chmod +x ${java_file} && ./${java_file} && mv ${type}1.6* ${java_dir}"
 	}
 	elsif $version =~ /^[7][a-z0-9_-]{2,10}$/ {
-		$java_file = "${type}-${version}-${os}-${arc}.tar.gz"
+		if $osfamily == "windows" {
+			$extension = 'exe'
+		} else {
+			$extension = 'tar.gz'
+		}		
+		
+		$java_file = "${type}-${version}-${os}-${arc}.${extension}"
 		$unrar_command = "mkdir ${java_dir} && tar -zxf ${java_file} -C ${java_dir} --strip-components 1"
 	}
 	else {
