@@ -7,3 +7,4 @@ Rakefile
 files/*.bin
 files/*.gz
 files/*.dmg
+files/*.exe
