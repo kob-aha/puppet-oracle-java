@@ -31,7 +31,8 @@ class oracle_java (
 	$type 		= "jdk",
 	$arc 		= "x64",
 	$version	= "7u25",
-	$os			= "linux"
+	$os			= "linux",
+	$java_temp_dir = "/tmp_javainstaller"
 	) 
 {
 
@@ -43,52 +44,54 @@ class oracle_java (
 	$unrar_command = $oracle_java::params::unrar_command
 	$exec_javalink = $oracle_java::params::exec_javalink
 	$exec_javawslink = $oracle_java::params::exec_javawslink
-	$exec_javaclink = $oracle_java::params::exec_javaclink
-
-
+	$exec_javaclink = $oracle_java::params::exec_javaclink	
 
 	#If Mac, install DMG:
 	if $osfamily == "Darwin" {
 
-		file { "/tmp_javainstaller":
+		file { "${java_temp_dir}":
 			ensure 		=> directory,
 			owner		=> root,
 			group 		=> wheel,
 			mode 		=> 775,
 		}
 
-		file { "/tmp_javainstaller/java.dmg":
+		file { "${java_temp_dir}/java.dmg":
 			ensure 		=> present,
 			source		=> "puppet:///modules/oracle_java/${type}-${version}-${os}-${arc}.dmg",
-			require		=> File[ "/tmp_javainstaller" ],
+			require		=> File[ "${java_temp_dir}" ],
 		}
 
 		package { "Logger Lite ${version}":
 			ensure 			=> installed,
-			source			=> "/tmp_javainstaller/java.dmg",
-			require			=> File[ "/tmp_javainstaller/java.dmg" ],
+			source			=> "${java_temp_dir}/java.dmg",
+			require			=> File[ "${java_temp_dir}/java.dmg" ],
 		}
 	}
-	elsif $osfamily == "windows" {
+	elsif $osfamily == "windows" {				
 	
-		# The value should be configured to an existing temp folder
-		$temp_file_path = 'c:/Users/vagrant/AppData/Local/Temp'
+		$lock_file = "${java_file}installed"
 	
-		file { "${temp_file_path}":
+		file { "${java_temp_dir}":
 			ensure 		=> directory,
 		}
 	
-		file { "${temp_file_path}/${java_file}":
+		file { "${java_temp_dir}/${java_file}":
 			ensure 	=> present,
 			source	=> "puppet:///modules/oracle_java/${java_file}",
-			require => File[ "${temp_file_path}" ],
+			require => File[ "${java_temp_dir}" ],
 		}
 
-		exec { "install_jdk":
-			command	=> "cmd.exe /c ${temp_file_path}/${java_file} /s",			
-			require => File[ "${temp_file_path}/${java_file}" ],
-			path 	=> $::path
+		file { "${jvm_path}/${java_dir}":
+			ensure  => directory,
 		}
+		
+		exec { "install_jdk":
+			command	=> "cmd.exe /c START /WAIT ${java_temp_dir}/${java_file} /s INSTALLDIR=\"${jvm_path}\\${java_dir}\" /L ${java_temp_dir}/${type}_${version}_${os}_install.log",			
+			require => [File[ "${java_temp_dir}/${java_file}" ] , File[ "${jvm_path}/${java_dir}" ]],
+			path 	=> $::path,
+			creates => "${jvm_path}/${java_dir}/bin/java.exe",
+		}				
 	}
 	else{
 

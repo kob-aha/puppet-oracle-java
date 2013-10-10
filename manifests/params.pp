@@ -4,17 +4,29 @@
 
 class oracle_java::params {
 
-	$java_dir = "${type}-${version}"
-	$jvm_path = "/usr/lib/jvm"
+	$java_dir = "${type}-${version}"	
+	
+	if $osfamily == "windows" {
+		$extension = 'exe'
+		$jvm_path = "c:\\Program Files"
+	} else {
+		# The extension is different for the different java version,
+		# so we should set it after checking the version
+		$jvm_path = "/usr/lib/jvm"
+	}
 
 	if $version =~ /^[6][a-z0-9_-]{2,10}$/ {
-		$java_file = "${type}-${version}-${os}-${arc}.bin"
+	
+		if $osfamily != "windows" {
+			$extension = 'bin'
+		}
+	
+		$java_file = "${type}-${version}-${os}-${arc}.${extension}"
 		$unrar_command = "chmod +x ${java_file} && ./${java_file} && mv ${type}1.6* ${java_dir}"
 	}
 	elsif $version =~ /^[7][a-z0-9_-]{2,10}$/ {
-		if $osfamily == "windows" {
-			$extension = 'exe'
-		} else {
+	
+		if $osfamily != "windows" {			
 			$extension = 'tar.gz'
 		}		
 		
